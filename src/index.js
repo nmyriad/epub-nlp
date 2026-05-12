@@ -18,7 +18,7 @@ checkForUpdates();
 program
   .name("epub-nlp")
   .description("Deep NLP analysis of EPUB books — POS, phrases, entities, word database, Anki export")
-  .version("1.3.0");
+  .version("1.4.0");
 
 // ── Command: analyze ────────────────────────────────────────────────────────
 

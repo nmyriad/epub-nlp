@@ -87,15 +87,21 @@ function slugify(title) {
 
 /**
  * Ingest words from a book result into the database.
- * Tracks book metadata, language, and per-word first-occurrence.
+ * @param {object} bookResult
+ * @param {string|null} manualLanguageCode - optional override (e.g. "spa", "eng")
  */
-export async function ingestBookWords(bookResult) {
+export async function ingestBookWords(bookResult, manualLanguageCode = null) {
   const db = await openDb();
   const now = new Date().toISOString();
   const added = [];
 
-  // Detect language
-  const lang = detectLanguage(bookResult);
+  // Use manual language if provided, otherwise auto-detect
+  let lang;
+  if (manualLanguageCode) {
+    lang = { code: manualLanguageCode, name: LANGUAGE_NAMES[manualLanguageCode] || manualLanguageCode };
+  } else {
+    lang = detectLanguage(bookResult);
+  }
 
   // Register the book
   const slug = slugify(bookResult.bookTitle);
@@ -231,6 +237,53 @@ export async function resetExportedFlags(filters = {}) {
     if (db.data.words[w.word]) db.data.words[w.word].exported = false;
   }
   await db.write();
+}
+
+/**
+ * Remove a book from the database.
+ * @param {string} slug - book slug
+ * @param {boolean} removeWords - if true, also delete all words first seen in this book
+ */
+export async function removeBook(slug, removeWords = false) {
+  const db = await openDb();
+  if (!db.data.books[slug]) throw new Error(`Book not found: ${slug}`);
+
+  if (removeWords) {
+    for (const key of Object.keys(db.data.words)) {
+      if (db.data.words[key].firstSeenBookSlug === slug) {
+        delete db.data.words[key];
+      }
+    }
+  }
+
+  delete db.data.books[slug];
+  db.data.meta.totalBooks = Object.keys(db.data.books).length;
+  db.data.meta.totalWords = Object.keys(db.data.words).length;
+  db.data.meta.lastUpdated = new Date().toISOString();
+  await db.write();
+}
+
+/**
+ * Update the language of a book and all its words.
+ */
+export async function updateBookLanguage(slug, languageCode) {
+  const db = await openDb();
+  if (!db.data.books[slug]) throw new Error(`Book not found: ${slug}`);
+
+  const langName = LANGUAGE_NAMES[languageCode] || languageCode;
+  db.data.books[slug].language = languageCode;
+  db.data.books[slug].languageName = langName;
+
+  // Update all words from this book
+  for (const key of Object.keys(db.data.words)) {
+    if (db.data.words[key].firstSeenBookSlug === slug) {
+      db.data.words[key].language = languageCode;
+    }
+  }
+
+  db.data.meta.lastUpdated = new Date().toISOString();
+  await db.write();
+  return { languageCode, languageName: langName };
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────

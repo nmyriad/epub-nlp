@@ -43,7 +43,8 @@ async function translateMyMemory(word, fromLang, toLang = "eng") {
     const data = await resp.json();
     if (data.responseStatus !== 200) return null;
     const translation = data.responseData?.translatedText;
-    if (!translation || translation.toLowerCase() === word.toLowerCase()) return null;
+    if (!translation) return null;
+    if (translation.toLowerCase() === word.toLowerCase()) return `${word} (cognate)`;
     return translation.toLowerCase();
   } catch {
     return null;
@@ -92,8 +93,9 @@ async function translateDeepLBatch(words, fromLang, toLang = "eng", apiKey) {
 
     return words.map((word, i) => {
       const result = translations[i]?.text?.toLowerCase()?.trim();
-      // Discard if identical to source word (cognate or untranslatable)
-      if (!result || result === word.toLowerCase()) return null;
+      // If identical to source — it's a cognate, label it as such
+      if (!result) return null;
+      if (result === word.toLowerCase()) return `${word} (cognate)`;
       return result;
     });
   } catch (err) {

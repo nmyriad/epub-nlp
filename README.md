@@ -27,7 +27,7 @@ Extracts and analyzes text across every chapter, producing structured JSON and C
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/epub-nlp.git
+git clone https://github.com/nmyriad/epub-nlp.git
 cd epub-nlp
 npm install
 ```

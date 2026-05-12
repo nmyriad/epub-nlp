@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>epub-nlp</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1117;color:#e8e8e8;min-height:100vh;padding:2rem}
+  header{text-align:center;margin-bottom:2rem}
+  header h1{font-size:2rem;font-weight:700;color:#fff}
+  header p{color:#888;margin-top:.4rem;font-size:.95rem}
+  .container{max-width:900px;margin:0 auto}
+
+  /* DB Bar */
+  #dbBar{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+  .db-stats{display:flex;gap:2rem;flex-wrap:wrap}
+  .db-stat{text-align:center}
+  .db-stat .n{font-size:1.4rem;font-weight:700;color:#58a6ff}
+  .db-stat .l{font-size:.72rem;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-top:.1rem}
+
+  /* Drop zone */
+  #dropzone{border:2px dashed #333;border-radius:16px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;background:#161b22;margin-bottom:1.5rem}
+  #dropzone.dragover{border-color:#58a6ff;background:#1c2a3a}
+  #dropzone .icon{font-size:3rem;margin-bottom:1rem}
+  #dropzone h2{font-size:1.1rem;font-weight:600;color:#fff;margin-bottom:.4rem}
+  #dropzone p{color:#666;font-size:.9rem}
+  .browse{color:#58a6ff;text-decoration:underline;cursor:pointer}
+  #fileInput{display:none}
+
+  /* Progress */
+  #progress{display:none;text-align:center;padding:2rem;background:#161b22;border-radius:16px;margin-bottom:1.5rem}
+  .spinner{width:40px;height:40px;border:3px solid #333;border-top-color:#58a6ff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Results */
+  #results{display:none}
+  .book-header{margin-bottom:1.5rem}
+  .book-title{font-size:1.4rem;font-weight:700;color:#fff}
+  .book-meta{display:flex;gap:.75rem;margin-top:.4rem;flex-wrap:wrap}
+  .badge{background:#21262d;border-radius:20px;padding:.2rem .75rem;font-size:.78rem;color:#aaa}
+  .badge.lang{background:#1f3a1f;color:#4caf50}
+  .badge.new{background:#1f3a5f;color:#58a6ff}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;margin-bottom:1.5rem}
+  .stat-card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:1.25rem;text-align:center}
+  .stat-card .num{font-size:1.6rem;font-weight:700;color:#58a6ff}
+  .stat-card .lbl{font-size:.75rem;color:#666;margin-top:.3rem;text-transform:uppercase;letter-spacing:.5px}
+
+  /* Export panel */
+  .export-panel{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+  .export-panel h3{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:1rem}
+  .filter-row{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end}
+  .filter-group{display:flex;flex-direction:column;gap:.35rem;min-width:150px}
+  .filter-group label{font-size:.78rem;color:#666;text-transform:uppercase;letter-spacing:.5px}
+  select{background:#0f1117;color:#e8e8e8;border:1px solid #30363d;border-radius:8px;padding:.5rem .75rem;font-size:.875rem;cursor:pointer;width:100%}
+  select:focus{outline:none;border-color:#58a6ff}
+  .export-btns{display:flex;gap:.75rem;flex-wrap:wrap}
+  .btn{padding:.6rem 1.2rem;border-radius:8px;border:none;font-size:.875rem;font-weight:600;cursor:pointer;transition:opacity .15s;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+  .btn:hover{opacity:.85}
+  .btn-anki{background:#238636;color:#fff}
+  .btn-csv{background:#21262d;color:#e8e8e8;border:1px solid #30363d}
+  .btn-outline{background:transparent;color:#58a6ff;border:1px solid #58a6ff;padding:.35rem .9rem;font-size:.8rem}
+  .btn-translate{background:#6e40c9;color:#fff}
+  .btn-ankiconnect{background:#1a6b9a;color:#fff}
+
+  /* Word sections */
+  .section{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:1.5rem;margin-bottom:1rem}
+  .section h3{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:1rem}
+  .word-list{display:flex;flex-wrap:wrap;gap:.5rem}
+  .word-tag{background:#21262d;border-radius:6px;padding:.3rem .7rem;font-size:.85rem;color:#e8e8e8}
+  .word-tag .cnt{color:#58a6ff;font-size:.75rem;margin-left:.3rem}
+
+  /* Entities */
+  .entity-group{margin-bottom:.75rem}
+  .entity-group .type{color:#888;font-size:.78rem;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.5px}
+
+  /* Error */
+  .error-msg{background:#2d1515;border:1px solid #6e2020;border-radius:12px;padding:1rem 1.5rem;color:#f87171;margin-bottom:1.5rem;display:none}
+
+  /* Books list */
+  #booksList{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;display:none}
+  #booksList h3{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:1rem}
+  .book-row{display:flex;align-items:center;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid #21262d;gap:1rem;flex-wrap:wrap}
+  .book-row:last-child{border-bottom:none}
+  .book-row .book-name{font-size:.9rem;color:#e8e8e8;flex:1}
+  .book-row .book-info{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+  .btn-danger{background:transparent;color:#f87171;border:1px solid #6e2020;padding:.25rem .7rem;font-size:.78rem;border-radius:6px;cursor:pointer}
+  .btn-danger:hover{background:#2d1515}
+  .btn-edit{background:transparent;color:#888;border:1px solid #30363d;padding:.25rem .7rem;font-size:.78rem;border-radius:6px;cursor:pointer}
+  .btn-edit:hover{color:#e8e8e8;border-color:#888}
+
+  /* Language picker on drop */
+  #langPicker{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem;display:block}
+  #langPicker label{font-size:.8rem;color:#888;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:.5rem}
+  #langPicker .lang-row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+  #langPicker select{flex:1;min-width:180px}
+  #langPicker p{font-size:.78rem;color:#555;margin-top:.4rem}
+
+  /* Translation panel */
+  .translate-panel{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+  .translate-panel h3{font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:1rem}
+  .preview-box{background:#0f1117;border:1px solid #21262d;border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:.875rem}
+  .preview-box .big{font-size:1.4rem;font-weight:700;color:#58a6ff}
+  .preview-box .sub{color:#666;font-size:.8rem;margin-top:.25rem}
+  .preview-box .warn{color:#f0a500;font-size:.8rem;margin-top:.5rem}
+  .progress-bar{background:#21262d;border-radius:4px;height:6px;margin:1rem 0;overflow:hidden;display:none}
+  .progress-bar-fill{background:#6e40c9;height:100%;width:0%;transition:width .3s}
+  .progress-status{font-size:.8rem;color:#888;margin-bottom:.5rem;display:none}
+  .anki-status{font-size:.78rem;padding:.3rem .75rem;border-radius:20px;display:inline-flex;align-items:center;gap:.4rem}
+  .anki-connected{background:#1a3a1a;color:#4caf50;border:1px solid #2a5a2a}
+  .anki-disconnected{background:#2d1515;color:#f87171;border:1px solid #6e2020}
+  .provider-row{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;align-items:flex-end}
+  .deepl-key{display:none;flex:1}
+  .deepl-key input{width:100%;background:#0f1117;color:#e8e8e8;border:1px solid #30363d;border-radius:8px;padding:.5rem .75rem;font-size:.875rem}
+
+  a.reset-link{display:block;text-align:center;color:#58a6ff;cursor:pointer;font-size:.875rem;text-decoration:underline;margin-top:1.5rem}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📖 epub-nlp</h1>
+    <p>Drag and drop an EPUB to analyze vocabulary, phrases, and entities</p>
+  </header>
+
+  <div id="dbBar">
+    <div class="db-stats">
+      <div class="db-stat"><div class="n" id="dbTotal">—</div><div class="l">Words</div></div>
+      <div class="db-stat"><div class="n" id="dbBooks">—</div><div class="l">Books</div></div>
+      <div class="db-stat"><div class="n" id="dbUnexported">—</div><div class="l">New (unexported)</div></div>
+    </div>
+    <button class="btn-outline btn" onclick="toggleBooks()">📚 My Library</button>
+  </div>
+
+  <div id="booksList">
+    <h3>Books in Database</h3>
+    <div id="booksContent"></div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div id="langPicker">
+    <label>Book Language</label>
+    <div class="lang-row">
+      <select id="manualLang">
+        <option value="">Auto-detect</option>
+        <option value="spa">Spanish</option>
+        <option value="eng">English</option>
+        <option value="fra">French</option>
+        <option value="deu">German</option>
+        <option value="ita">Italian</option>
+        <option value="por">Portuguese</option>
+        <option value="rus">Russian</option>
+        <option value="jpn">Japanese</option>
+        <option value="zho">Chinese</option>
+        <option value="ara">Arabic</option>
+        <option value="nld">Dutch</option>
+      </select>
+    </div>
+    <p>Select a language if auto-detection is wrong, or leave as Auto-detect.</p>
+  </div>
+
+  <div id="dropzone">
+    <div class="icon">📚</div>
+    <h2>Drop your EPUB here</h2>
+    <p>or <span class="browse" onclick="document.getElementById('fileInput').click()">browse for a file</span></p>
+    <p style="margin-top:.5rem;font-size:.8rem;color:#444">.epub files only</p>
+    <input type="file" id="fileInput" accept=".epub">
+  </div>
+
+  <div id="progress">
+    <div class="spinner"></div>
+    <p>Analyzing your book — this may take a minute...</p>
+  </div>
+
+  <div id="results">
+    <div class="book-header">
+      <div class="book-title" id="bookTitle"></div>
+      <div class="book-meta" id="bookMeta"></div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Translation Panel -->
+    <div class="translate-panel">
+      <h3>🌐 Translate & Export</h3>
+
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Part of Speech</label>
+          <select id="filterPos" onchange="updatePreview()">
+            <option value="all">All types</option>
+            <option value="noun">Nouns only</option>
+            <option value="verb">Verbs only</option>
+            <option value="adjective">Adjectives only</option>
+            <option value="adverb">Adverbs only</option>
+            <option value="pronoun">Pronouns only</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Book</label>
+          <select id="filterBook" onchange="updatePreview()">
+            <option value="all">All books</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Language</label>
+          <select id="filterLang" onchange="updatePreview()">
+            <option value="all">All languages</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Translate to</label>
+          <select id="toLang">
+            <option value="eng">English</option>
+            <option value="spa">Spanish</option>
+            <option value="fra">French</option>
+            <option value="deu">German</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="provider-row">
+        <div class="filter-group" style="min-width:160px">
+          <label>Translation Provider</label>
+          <select id="provider" onchange="toggleDeepL()">
+            <option value="mymemory">MyMemory (free)</option>
+            <option value="deepl">DeepL (better quality)</option>
+          </select>
+        </div>
+        <div class="deepl-key filter-group" id="deeplKeyGroup">
+          <label>DeepL API Key</label>
+          <input type="password" id="deeplKey" placeholder="Paste your free DeepL API key">
+        </div>
+      </div>
+
+      <div class="preview-box" id="previewBox">
+        <div style="color:#555;font-size:.9rem">Select filters to see a preview...</div>
+      </div>
+
+      <div class="progress-status" id="progressStatus"></div>
+      <div class="progress-bar" id="progressBar"><div class="progress-bar-fill" id="progressFill"></div></div>
+
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
+        <button class="btn btn-translate" id="translateBtn" onclick="doTranslate()">🌐 Translate Selected</button>
+        <button class="btn btn-anki" onclick="doExport('anki')">⬇ Export to Anki</button>
+        <button class="btn btn-csv" onclick="doExport('csv')">⬇ Export to CSV</button>
+      </div>
+
+      <div style="border-top:1px solid #21262d;padding-top:1rem;margin-top:.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+          <div>
+            <div style="font-size:.8rem;color:#888;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.5px">AnkiConnect</div>
+            <span class="anki-status anki-disconnected" id="ankiStatus">⚡ Checking...</span>
+          </div>
+          <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+            <div class="filter-group" style="min-width:160px">
+              <label>Base deck name</label>
+              <input type="text" id="deckName" value="epub-nlp" oninput="updateDeckPreview()" style="background:#0f1117;color:#e8e8e8;border:1px solid #30363d;border-radius:8px;padding:.4rem .75rem;font-size:.875rem;width:100%">
+            </div>
+            <div class="filter-group" style="min-width:160px">
+              <label>Deck structure</label>
+              <select id="splitByPos" onchange="updateDeckPreview()">
+                <option value="true">Split by part of speech</option>
+                <option value="false">Single deck</option>
+              </select>
+            </div>
+            <button class="btn btn-ankiconnect" style="margin-top:1.2rem" onclick="doPushAnki()">⚡ Push to Anki</button>
+          </div>
+        </div>
+        <div id="deckPreview" style="font-size:.78rem;color:#555;margin-top:.75rem;font-family:monospace"></div>
+        </div>
+        <p style="font-size:.75rem;color:#444;margin-top:.75rem">
+          AnkiConnect pushes cards directly into Anki without any file import.
+          Requires <a href="https://ankiweb.net/shared/info/2055492159" target="_blank" style="color:#58a6ff">AnkiConnect plugin</a> installed and Anki open.
+        </p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>🔤 Top Words</h3>
+      <div class="word-list" id="topWords"></div>
+    </div>
+    <div class="section">
+      <h3>📦 Top Nouns</h3>
+      <div class="word-list" id="topNouns"></div>
+    </div>
+    <div class="section">
+      <h3>⚡ Top Verbs</h3>
+      <div class="word-list" id="topVerbs"></div>
+    </div>
+    <div class="section">
+      <h3>🎨 Top Adjectives</h3>
+      <div class="word-list" id="topAdjectives"></div>
+    </div>
+    <div class="section">
+      <h3>🏷️ Named Entities</h3>
+      <div id="entities"></div>
+    </div>
+
+    <a class="reset-link" onclick="resetUI()">← Analyze another book</a>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

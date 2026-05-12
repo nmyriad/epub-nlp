@@ -1,0 +1,33 @@
+{
+  "name": "epub-nlp",
+  "version": "1.7.0",
+  "description": "CLI tool to parse EPUBs and perform deep NLP analysis — POS tagging, phrases, named entities, frequency stats, and more.",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "epub-nlp": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node test/sample.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0",
+    "compromise": "^14.14.4",
+    "epub2": "^3.0.2",
+    "express": "^5.2.1",
+    "franc-min": "^6.2.0",
+    "jszip": "^3.10.1",
+    "lowdb": "^7.0.1",
+    "multer": "^2.1.1",
+    "node-fetch": "^3.3.2",
+    "node-html-parser": "^6.1.13",
+    "open": "^11.0.0",
+    "ora": "^8.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

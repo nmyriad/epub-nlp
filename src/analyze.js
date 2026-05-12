@@ -30,8 +30,8 @@ export function analyzeText(text, chapterId = "unknown") {
   const people = doc.people().out("array");
   const places = doc.places().out("array");
   const organizations = doc.organizations().out("array");
-  const dates = doc.dates().out("array");
-  const values = doc.values ? doc.values().out("array") : [];
+  const dates = doc.match("#Date+").out("array");
+  const values = doc.match("#Value+").out("array");
 
   // ── Sentences ─────────────────────────────────────────────────────────────
   const sentences = doc.sentences().out("array");

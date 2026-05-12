@@ -11,11 +11,14 @@ import { analyzeText, mergeAnalyses } from "./analyze.js";
 import { writeJson, writeCsv, printSummary } from "./output.js";
 import { ingestBookWords, getUnexportedWords, getAllWords, getDbStats, resetExportedFlags } from "./worddb.js";
 import { exportToAnki, exportToVocabCsv, exportTopWordsReport } from "./vocab-export.js";
+import { checkForUpdates } from "./updater.js";
+
+checkForUpdates();
 
 program
   .name("epub-nlp")
   .description("Deep NLP analysis of EPUB books — POS, phrases, entities, word database, Anki export")
-  .version("1.1.0");
+  .version("1.2.0");
 
 // ── Command: analyze ────────────────────────────────────────────────────────
 

@@ -18,7 +18,7 @@ checkForUpdates();
 program
   .name("epub-nlp")
   .description("Deep NLP analysis of EPUB books — POS, phrases, entities, word database, Anki export")
-  .version("1.2.0");
+  .version("1.3.0");
 
 // ── Command: analyze ────────────────────────────────────────────────────────
 
@@ -206,6 +206,16 @@ db.command("reset-exports")
   .action(async () => {
     await resetExportedFlags();
     console.log(chalk.green("\n✔  All words marked as unexported.\n"));
+  });
+
+// ── Command: ui ──────────────────────────────────────────────────────────────
+
+program
+  .command("ui")
+  .description("Launch the drag-and-drop web UI in your browser")
+  .action(async () => {
+    const { startServer } = await import("./server.js");
+    await startServer();
   });
 
 program.parse();
